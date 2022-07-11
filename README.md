@@ -2,6 +2,8 @@
 
 **time-func represents a set of data points as a function of time and performs various mathematical operations on the data**
 
+This project is barebones and unfinished! Use at your own risk. Feel free to contribute!
+
 ---
 
 ## time-func dependencies
