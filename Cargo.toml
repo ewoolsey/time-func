@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Eric Woolsey"]
 edition = "2021"
 description = "represents a set of data points as a function of time and performs various mathematical operations on the data"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/ewoolsey/time-func"
 
 [lib]
 crate-type = ["lib"]
