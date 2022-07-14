@@ -1,10 +1,10 @@
 [package]
 name = "time-func"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Eric Woolsey"]
 edition = "2021"
 description = "represents a set of data points as a function of time and performs various mathematical operations on the data"
-license = "MIT OR Apache-2.0"
+license = "GNU General Public License v3.0 only"
 readme = "README.md"
 repository = "https://github.com/ewoolsey/time-func"
 
