@@ -1,6 +1,6 @@
 [package]
 name = "time-func"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Eric Woolsey"]
 edition = "2021"
 description = "represents a set of data points as a function of time and performs various mathematical operations on the data"
