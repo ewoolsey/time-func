@@ -106,7 +106,7 @@ impl Div for TimeFunc {
                     output.push((lhs_tuple.0, val)).unwrap();
                     lhs_index += 1;
                 } else if lhs_tuple.0 > rhs_tuple.0 {
-                    let val = rhs_tuple.1 / self.get_value_interpolated(&rhs_tuple.0);
+                    let val = self.get_value_interpolated(&rhs_tuple.0) / rhs_tuple.1;
                     output.push((rhs_tuple.0, val)).unwrap();
                     rhs_index += 1;
                 } else {  //lhs_tuple.0 == rhs_tuple.0
@@ -115,10 +115,8 @@ impl Div for TimeFunc {
                     lhs_index += 1;
                     rhs_index += 1;
                 }
-            } else { break }
+            } else { return output; }
         }
-        
-        output
     }
 }
 
