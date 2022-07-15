@@ -165,10 +165,7 @@ impl TimeFunc {
         while current_index < end_index {
             integral += get_integral(self.0[current_index], self.0[current_index + 1]);
             current_index += 1;
-            println!("here");
         }
-        println!("start_index: {}", start_index);
-        println!("end_index: {}", end_index);
         integral += get_integral(self.0[end_index], end_point);
         integral
     }
@@ -343,10 +340,6 @@ impl TimeFunc {
                 let lower_index = index - 1;
                 let upper_tuple = self.0[upper_index];
                 let lower_tuple = self.0[lower_index];
-                println!("lower index: {}", lower_index);
-                println!("upper: {:?}", upper_tuple);
-                println!("lower: {:?}", lower_tuple);
-
                 let slope = (upper_tuple.1 - lower_tuple.1)
                     / (upper_tuple.0 - lower_tuple.0).num_seconds() as f64;
                 slope * (time.to_owned() - lower_tuple.0).num_seconds() as f64 + lower_tuple.1
@@ -514,7 +507,6 @@ mod tests {
 
         let integral =
             time_func.get_integral_interpolated(start_time + time_step * 2, time_step * 2);
-        println!("integral: {}", integral);
         assert_eq!(integral, 1.5 * 60.0 + 1.5 * 60.0);
     }
 }
