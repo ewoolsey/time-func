@@ -3,7 +3,7 @@
 use chrono::{DateTime, Duration, Utc};
 use plotters::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::{error::Error, ops::{Mul, Div}};
+use std::{error::Error, ops::{Mul, Div, Add, Sub}};
 
 /// A vector of data points that we can use to analyse time series data.
 /// Each data point is valid from the previous timestamp until its current timestamp.
@@ -30,49 +30,49 @@ impl From<Vec<(DateTime<Utc>, f64)>> for TimeFunc {
     fn from(input: Vec<(DateTime<Utc>, f64)>) -> Self { TimeFunc(input) }
 }
 
+fn intersection(lhs: TimeFunc, rhs: TimeFunc, function: fn(f64, f64) -> f64 ) -> TimeFunc {
+    let lhs_domain = lhs.get_domain();
+    let rhs_domain = rhs.get_domain();
+
+    let output_start_time = DateTime::max(lhs_domain.start, rhs_domain.start);
+
+    let lhs_start_index = lhs.get_index_safe(&output_start_time);
+    let rhs_start_index = rhs.get_index_safe(&output_start_time);
+
+    let mut lhs_index = lhs_start_index;
+    let mut rhs_index = rhs_start_index;
+
+    let mut output = TimeFunc::new();
+
+    loop {
+        let lhs_tuple = lhs.0.get(lhs_index);
+        let rhs_tuple = rhs.0.get(rhs_index);
+
+        if let Some(lhs_tuple) = lhs_tuple 
+        && let Some(rhs_tuple) = rhs_tuple {
+            if lhs_tuple.0 < rhs_tuple.0 {
+                let val = function(lhs_tuple.1, rhs.get_value_interpolated(&lhs_tuple.0));
+                output.push((lhs_tuple.0, val)).unwrap();
+                lhs_index += 1;
+            } else if lhs_tuple.0 > rhs_tuple.0 {
+                let val = function(lhs.get_value_interpolated(&rhs_tuple.0), rhs_tuple.1);
+                output.push((rhs_tuple.0, val)).unwrap();
+                rhs_index += 1;
+            } else {  //lhs_tuple.0 == rhs_tuple.0
+                let val = function(lhs_tuple.1, rhs_tuple.1);
+                output.push((lhs_tuple.0, val)).unwrap();
+                lhs_index += 1;
+                rhs_index += 1;
+            }
+        } else { return output; }
+    }
+}
+
 impl Mul for TimeFunc {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-
-        let lhs_domain = self.get_domain();
-        let rhs_domain = rhs.get_domain();
-
-        let output_start_time = DateTime::max(lhs_domain.start, rhs_domain.start);
- 
-        let lhs_start_index = self.get_index_safe(&output_start_time);
-        let rhs_start_index = rhs.get_index_safe(&output_start_time);
-
-        let mut lhs_index = lhs_start_index;
-        let mut rhs_index = rhs_start_index;
-
-
-        let mut output = TimeFunc::new();
-
-        loop {
-            let lhs_tuple = self.0.get(lhs_index);
-            let rhs_tuple = rhs.0.get(rhs_index);
-
-            if let Some(lhs_tuple) = lhs_tuple 
-            && let Some(rhs_tuple) = rhs_tuple {
-                if lhs_tuple.0 < rhs_tuple.0 {
-                    let val = lhs_tuple.1 * rhs.get_value_interpolated(&lhs_tuple.0);
-                    output.push((lhs_tuple.0, val)).unwrap();
-                    lhs_index += 1;
-                } else if lhs_tuple.0 > rhs_tuple.0 {
-                    let val = rhs_tuple.1 * self.get_value_interpolated(&rhs_tuple.0);
-                    output.push((rhs_tuple.0, val)).unwrap();
-                    rhs_index += 1;
-                } else {  //lhs_tuple.0 == rhs_tuple.0
-                    let val = lhs_tuple.1 * rhs_tuple.1;
-                    output.push((lhs_tuple.0, val)).unwrap();
-                    lhs_index += 1;
-                    rhs_index += 1;
-                }
-            } else { break }
-        }
-
-        output
+        intersection(self, rhs, |x, y| {x*y})
     }
 }
 
@@ -80,46 +80,25 @@ impl Div for TimeFunc {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
-
-        let lhs_domain = self.get_domain();
-        let rhs_domain = rhs.get_domain();
-
-        let output_start_time = DateTime::max(lhs_domain.start, rhs_domain.start);
- 
-        let lhs_start_index = self.get_index_safe(&output_start_time);
-        let rhs_start_index = rhs.get_index_safe(&output_start_time);
-
-        let mut lhs_index = lhs_start_index;
-        let mut rhs_index = rhs_start_index;
-
-
-        let mut output = TimeFunc::new();
-
-        loop {
-            let lhs_tuple = self.0.get(lhs_index);
-            let rhs_tuple = rhs.0.get(rhs_index);
-
-            if let Some(lhs_tuple) = lhs_tuple 
-            && let Some(rhs_tuple) = rhs_tuple {
-                if lhs_tuple.0 < rhs_tuple.0 {
-                    let val = lhs_tuple.1 / rhs.get_value_interpolated(&lhs_tuple.0);
-                    output.push((lhs_tuple.0, val)).unwrap();
-                    lhs_index += 1;
-                } else if lhs_tuple.0 > rhs_tuple.0 {
-                    let val = self.get_value_interpolated(&rhs_tuple.0) / rhs_tuple.1;
-                    output.push((rhs_tuple.0, val)).unwrap();
-                    rhs_index += 1;
-                } else {  //lhs_tuple.0 == rhs_tuple.0
-                    let val = lhs_tuple.1 / rhs_tuple.1;
-                    output.push((lhs_tuple.0, val)).unwrap();
-                    lhs_index += 1;
-                    rhs_index += 1;
-                }
-            } else { return output; }
-        }
+        intersection(self, rhs, |x, y| {x/y})
     }
 }
 
+impl Add for TimeFunc {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        intersection(self, rhs, |x, y| {x+y})
+    }
+}
+
+impl Sub for TimeFunc {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        intersection(self, rhs, |x, y| {x-y})
+    }
+}
 
 impl TimeFunc {
     /// Creates an empty TimeFunc
